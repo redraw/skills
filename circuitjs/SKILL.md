@@ -41,13 +41,15 @@ Each element line: `<dump-type> <x> <y> <x2> <y2> <flags> [element-specific-data
 |------|---------|------|---------|
 | `r` | Resistor | `w` | Wire |
 | `c` | Capacitor | `g` | Ground |
-| `L` | Inductor / Logic Input | `n` | Noise Source (legacy text type) |
-| `v` | Voltage Source (DC/AC/etc., see waveform field) | `S` | Switch (SPST) |
+| `l` (lowercase) | Inductor | `n` | Noise Source (legacy text type) |
+| `L` (uppercase) | Logic Input | `s` (lowercase) | Switch (SPST) |
+| `v` | Voltage Source (DC/AC/etc., see waveform field) | `S` (uppercase) | Switch (SPDT) |
 | `a` | Op-Amp | `d` | Diode |
-| `i` | Current Source | `t` | Transistor |
+| `i` | Current Source | `t` | Transistor (NPN/PNP) |
 | `207` (text) / `<ln>` (XML) | Labeled Node | `429` | DPDT Switch |
-| `107` | Scope | `432` | Analog Mux |
+| `403` | Scope | `432` | Analog Mux |
 | `210` | Data Recorder | `O` | Output (test point) |
+| `164` | Counter (up/down) | `421` | Counter (simple) |
 
 ## Reference files
 
