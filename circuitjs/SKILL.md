@@ -47,7 +47,7 @@ Each element line: `<dump-type> <x> <y> <x2> <y2> <flags> [element-specific-data
 | `a` | Op-Amp | `d` | Diode |
 | `i` | Current Source | `t` | Transistor (NPN/PNP) |
 | `207` (text) / `<ln>` (XML) | Labeled Node | `429` | DPDT Switch |
-| `403` | Scope | `432` | Analog Mux |
+| `403` (text) / `<o>` (XML) | Scope | `432` | Analog Mux |
 | `210` | Data Recorder | `O` | Output (test point) |
 | `164` | Counter (up/down) | `421` | Counter (simple) |
 

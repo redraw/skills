@@ -210,12 +210,42 @@ How labels work (this matters):
 
 #### Scope
 ```
-403 <x> <y> <x2> <y2> <flags> <scope-data-token>
+403 <x> <y> <x2> <y2> <flags> <scope-data-token>     # text format
 ```
-- **dump-type**: `403` — not `107`; `107` doesn't exist anywhere in current source. Class `ScopeElm`
-- **scope-data-token**: a single underscore-delimited string parsed by the embedded `Scope` object's own `undump()` — display options (which signal(s) to show, log scale, stacked traces, etc.) live inside that token, not in the `<flags>` field. There is no `<probe-count> [names...]` grammar on the element line itself
+- **dump-type**: `403` (text format); the **XML tag is `o`** — not `107`; `107` doesn't exist anywhere in current source. Class `ScopeElm`
+- **scope-data-token** (text format): a single underscore-delimited string parsed by the embedded `Scope` object's own `undump()` — display options (which signal(s) to show, log scale, stacked traces, etc.) live inside that token, not in the `<flags>` field. There is no `<probe-count> [names...]` grammar on the element line itself
 - **flags**: No `FLAG_*` constants defined on `ScopeElm` itself
-- **Example**: `403 96 96 160 160 0 <scope-internal-token>`
+- **Example (text)**: `403 96 96 160 160 0 <scope-internal-token>`
+
+**Scope in XML.** A scope serializes as a top-level `<o>` element. It is handled
+specially by `XMLDeserializer.readElements` (the `o` tag is checked before the
+tag→class map, and `ScopeElm`'s own `getXmlDumpType()` would be `Scope`), so do
+**not** give it coordinates: its `x` attribute is the optional scope caption
+text, not a position. Each traced signal is a child `<p>`:
+
+```xml
+<o en="5" sp="64" f="2" p="0" x="caption">
+  <p v="0" sc="5"/>          <!-- element `en`, value 0 (voltage) -->
+  <p e="0" v="0" sc="5"/>    <!-- element 0, value 0 -->
+</o>
+```
+
+| Attribute | Meaning |
+|---|---|
+| `en` | **Index of the plotted element** in the circuit's element list — file order, 0-based, **scopes excluded** (a scope is not in `elmList`). The scope shows that element's voltage/current, so it needs no probe wires |
+| `sp` | scope plot speed in sim-timestep units per pixel (default 64). Lower = finer time base; pick one that shows ~2–4 cycles of the signal or the trace is unreadable |
+| `f` | display flags — bit 0 `showI`, bit 1 `showV`, bit 2 `showMax` (inverted), bit 3 `showFreq`, … Set `f="2"` or voltage traces won't render (`Scope.calcVisiblePlots` hides `VAL_VOLTAGE` plots unless `showV`) |
+| `p` | scope stack position in the scope panel (default 0) |
+| `x` | optional caption text (XML-escaped); **not** coordinates |
+| `<p v>` | value shown: `0` voltage, `3` current, `7` power (see `Scope.VAL_*`) |
+| `<p e>` | element index for this trace; defaults to the parent `en` |
+| `<p sc>` | vertical scale for the trace's units |
+
+Because `en`/`e` are positional indices, inserting or removing elements above the
+plotted one shifts which element the scope points at — recompute them after
+changing the netlist. (This `<o>` form is the floating scope the "add scope"
+menu produces; the on-canvas `ScopeElm` element instead dumps as `<Scope x=…>`
+wrapping this same `<o>` child.)
 
 #### Data Recorder
 ```
@@ -225,6 +255,16 @@ How labels work (this matters):
 - **data-count**: Number of data samples (int, default 10240)
 - **flags**: No `FLAG_*` constants defined
 - **Example**: `210 96 96 160 160 0 10240`
+
+#### Output (test point)
+```
+O <x> <y> <x2> <y2> <flags> <scale>
+```
+- **dump-type / XML tag**: `O` / `<O>` — a **1-post** measurement point (`getPostCount() == 1`); only the first coordinate pair connects, the second just positions the readout text
+- **flags**: `FLAG_VALUE` (`1`) = display the measured voltage at the point; `FLAG_FIXED` (`2`) = freeze decimal precision. No flag → the point draws the literal label `out`
+- **scale**: display scale — `SCALE_AUTO` (`0`) by default, else `SCALE_K` (`1`), `SCALE_M` (`2`), `SCALE_MU` (`3`) …; in XML this is the `sc` attribute
+- **XML example**: `<O x="96 224 96 256" f="1" sc="0"/>`
+- **Text example**: `O 96 224 96 256 1 0`
 
 ---
 
