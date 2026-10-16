@@ -99,13 +99,35 @@ def unescape_text(text):
 
 ### URL-Encoded Format
 
-Circuits can be compressed in URLs using LZString:
+Circuits can be compressed into a `ctz=` query parameter using LZString:
 
 ```javascript
 // Compress circuit for URL
 var compressedCircuit = LZString.compressToEncodedURIComponent(circuitText);
-var url = `https://pfalstad.github.io/circuitjs1/circuitjs.html?ctz=${compressedCircuit}`;
+var url = `https://pfalstad.github.io/circuitjs1/circuitjs.html?ctz=${encodeURIComponent(compressedCircuit)}`;
 
 // Decompress circuit from URL
 var circuitText = LZString.decompressFromEncodedURIComponent(compressedCircuit);
 ```
+
+**Always percent-encode the compressed string** (`encodeURIComponent`) before
+placing it after `?ctz=`. LZString's URI-safe alphabet includes `+`, and the app
+reads the parameter with `URLSearchParams`/`getValue`, which decodes a bare `+`
+as a space. That silently corrupts the payload: the circuit still *loads*, but
+numbers are mangled (e.g. `x="96 160 96 256"` arrives as `"96 160 6  256"`) and
+CircuitJS throws `invalid integer: ""` from `setPositionFromXml`, leaving a blank
+canvas. Percent-encoding emits `%2B`, which the browser decodes back to `+`.
+
+Python equivalent (the `lzstring` package has the same alphabet):
+
+```python
+import lzstring, urllib.parse
+enc = lzstring.LZString().compressToEncodedURIComponent(circuit_xml)
+url = "https://pfalstad.github.io/circuitjs1/circuitjs.html?ctz=" + urllib.parse.quote(enc, safe="")
+```
+
+**Decoder pitfall:** Python's `lzstring.decompressFromEncodedURIComponent` treats
+`+` and space as the same symbol, so a Python-only compress → decompress
+round-trip can pass while the identical string breaks in a browser (the browser's
+LZString does not conflate them). Do not trust a Python round-trip as proof the
+link works — percent-encode, and verify in a browser.

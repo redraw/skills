@@ -56,7 +56,8 @@ S    → SwitchElm
 w    → WireElm
 g    → GroundElm
 ln   → LabeledNodeElm    (label text in `te` attribute — see example below)
-Scope, Counter2, CustomCompositeElm, etc. → tag is the class name minus "Elm" (no single-char text dump type)
+o    → floating scope (Scope) — HANDLED SPECIALLY by the reader, NOT via this map; see [Scope](elements.md#scope)
+Counter2, CustomCompositeElm, etc. → tag is the class name minus "Elm" (no single-char text dump type)
 ```
 
 ### Example XML
@@ -94,3 +95,32 @@ Placement rules:
 - Point point2 into open space (here, straight up from the trace). Text renders just past point2 (offset one font-height for vertical stubs).
 - Labels with the **same `te` value connect their nets together** — reuse names deliberately (buses, gnd, etc.), never by accident.
 - `te` is raw text in XML; escape `&`, `<`, `"` as `&amp;`, `&lt;`, `&quot;`.
+
+### Scope
+
+A scope is the one element that does **not** follow the tag-from-dump-type rule.
+It serializes as a top-level `<o>` and is handled specially by
+`XMLDeserializer.readElements` (the `o` tag is matched before the tag→class map).
+It has **no coordinates** — its `x` attribute is the optional caption text — and
+each traced signal is a child `<p>`:
+
+```xml
+<o en="5" sp="64" f="2" p="0" x="caption">
+  <p v="0" sc="5"/>          <!-- element `en`, value 0 (voltage) -->
+  <p e="0" v="0" sc="5"/>    <!-- element 0, value 0 -->
+</o>
+```
+
+- `en` — index of the plotted element in the circuit's element list (file order,
+  0-based, **scopes excluded**). The scope shows that element's voltage/current,
+  so it needs no probe wires.
+- `sp` — plot speed (sim-timestep units per pixel, default 64); lower is a finer
+  time base.
+- `f` — display flags; `f="2"` shows voltage traces (`showV`), `f="1"` current.
+- `p` — stack position in the scope panel (default 0).
+- `<p v>` — `0` voltage, `3` current, `7` power; `<p e>` selects the element for
+  that trace (defaults to `en`); `<p sc>` sets the trace's vertical scale.
+
+Because `en`/`e` are positional, adding or removing elements above the plotted one
+shifts the target — recompute after editing the netlist. See
+[Scope](elements.md#scope) for the full attribute table.

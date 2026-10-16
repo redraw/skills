@@ -14,7 +14,7 @@ Append these to `circuitjs.html?...` to control startup behavior:
 | Parameter | Effect |
 |---|---|
 | `cct=<string>` | Load the circuit from the URL (like `#` in the old Java version) |
-| `ctz=<string>` | Load the circuit from **compressed** data in the URL (LZString — see [working-with-files.md](working-with-files.md)) |
+| `ctz=<string>` | Load the circuit from **compressed** data in the URL (LZString — see [working-with-files.md](working-with-files.md)). Percent-encode the value (`%2B` for a literal `+`), or the payload is corrupted by `URLSearchParams` |
 | `startCircuit=<filename>` | Load circuit `filename` from the `circuits` directory |
 | `startCircuitLink=<URL>` | Load a circuit from a URL — must support CORS (e.g. a Dropbox shared file) |
 | `euroResistors=true` | Force "Euro" style resistors (default: based on browser language) |
